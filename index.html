@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice to Text Converter</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Voice to Text Converter</h1>
+        <p class="subtitle">Convert your audio/video files to text in Hindi or English</p>
+        
+        <div class="upload-container">
+            <div class="upload-area" id="dropZone">
+                <img src="https://cdn-icons-png.flaticon.com/512/3588/3588294.png" alt="Upload" class="upload-icon">
+                <p>Drag & Drop your audio/video file here</p>
+                <p>or</p>
+                <input type="file" id="fileInput" accept="audio/*,video/*" hidden>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+            </div>
+        </div>
+
+        <div class="file-info" id="fileInfo" style="display: none;">
+            <h3>Selected File:</h3>
+            <p id="fileName"></p>
+            <p id="fileSize"></p>
+        </div>
+
+        <div class="controls">
+            <button id="convertBtn" class="convert-btn" disabled>Convert to Text</button>
+        </div>
+
+        <div class="result-container" id="resultContainer" style="display: none;">
+            <h3>Converted Text:</h3>
+            <div class="text-output" id="textOutput"></div>
+            <button id="copyBtn" class="copy-btn">Copy Text</button>
+            <button id="downloadBtn" class="download-btn">Download Text</button>
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Converting...</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
