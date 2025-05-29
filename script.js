@@ -96,6 +96,7 @@ async function convertAudioToText(file) {
         let isProcessing = false;
         let retryCount = 0;
         const maxRetries = 3;
+        let isRecognitionStarted = false;
 
         recognition.onresult = (event) => {
             isProcessing = true;
@@ -114,19 +115,26 @@ async function convertAudioToText(file) {
                 audio.volume = Math.min(1, audio.volume + 0.2);
                 audio.currentTime = 0;
                 audio.play();
-                recognition.start();
+                if (!isRecognitionStarted) {
+                    recognition.start();
+                    isRecognitionStarted = true;
+                }
             } else {
                 reject(new Error(`Speech recognition error: ${event.error}. Please ensure your audio file contains clear speech and try again.`));
             }
         };
 
         recognition.onend = () => {
+            isRecognitionStarted = false;
             if (!isProcessing && retryCount < maxRetries) {
                 retryCount++;
                 console.log(`Retry attempt ${retryCount} of ${maxRetries}`);
                 audio.currentTime = 0;
                 audio.play();
-                recognition.start();
+                if (!isRecognitionStarted) {
+                    recognition.start();
+                    isRecognitionStarted = true;
+                }
             } else {
                 if (finalTranscript.trim() === '') {
                     reject(new Error('No speech detected in the audio file. Please ensure your audio file contains clear speech and try again.'));
@@ -147,14 +155,18 @@ async function convertAudioToText(file) {
         audio.onloadedmetadata = () => {
             // Ensure audio is loaded and ready
             audio.oncanplay = () => {
-                recognition.start();
+                if (!isRecognitionStarted) {
+                    recognition.start();
+                    isRecognitionStarted = true;
+                }
                 audio.play();
             };
         };
 
         audio.onended = () => {
-            if (recognition) {
+            if (recognition && isRecognitionStarted) {
                 recognition.stop();
+                isRecognitionStarted = false;
             }
             URL.revokeObjectURL(objectUrl);
         };
