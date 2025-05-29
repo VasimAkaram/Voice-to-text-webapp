@@ -169,4 +169,134 @@ h1 {
         width: 100%;
         margin: 0.5rem 0;
     }
+}
+
+.language-selector {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.lang-btn {
+    background: #f0f2f5;
+    border: 2px solid #1a73e8;
+    color: #1a73e8;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.lang-btn.active {
+    background: #1a73e8;
+    color: white;
+}
+
+.voice-input-container {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.mic-btn {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mic-btn:hover {
+    background: #1557b0;
+    transform: scale(1.05);
+}
+
+.mic-btn i {
+    font-size: 2rem;
+}
+
+.mic-btn.recording {
+    background: #dc3545;
+    animation: pulse 1.5s infinite;
+}
+
+.recording-status {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #dc3545;
+}
+
+.pulse-ring {
+    width: 15px;
+    height: 15px;
+    background: #dc3545;
+    border-radius: 50%;
+    animation: pulse-ring 1.5s infinite;
+}
+
+.separator {
+    text-align: center;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.separator::before,
+.separator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 45%;
+    height: 1px;
+    background: #ddd;
+}
+
+.separator::before {
+    left: 0;
+}
+
+.separator::after {
+    right: 0;
+}
+
+.separator span {
+    background: white;
+    padding: 0 1rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
 } 

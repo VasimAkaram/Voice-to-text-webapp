@@ -10,8 +10,111 @@ const textOutput = document.getElementById('textOutput');
 const copyBtn = document.getElementById('copyBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const loading = document.getElementById('loading');
+const micBtn = document.getElementById('micBtn');
+const recordingStatus = document.getElementById('recordingStatus');
+const langButtons = document.querySelectorAll('.lang-btn');
 
 let selectedFile = null;
+let currentLang = 'en-US';
+let isRecording = false;
+let recognition = null;
+
+// Language selection
+langButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        langButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentLang = btn.dataset.lang;
+        if (recognition) {
+            recognition.lang = currentLang;
+        }
+    });
+});
+
+// Initialize speech recognition
+function initSpeechRecognition() {
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = currentLang;
+    
+    recognition.onstart = () => {
+        isRecording = true;
+        micBtn.classList.add('recording');
+        micBtn.querySelector('span').textContent = 'Stop Recording';
+        recordingStatus.style.display = 'flex';
+    };
+
+    recognition.onend = () => {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        micBtn.querySelector('span').textContent = 'Start Recording';
+        recordingStatus.style.display = 'none';
+    };
+
+    recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript + ' ';
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+
+        // Update the text output with both interim and final results
+        textOutput.innerHTML = finalTranscript + 
+            '<span style="color: #666;">' + interimTranscript + '</span>';
+        
+        // Show the result container if it's hidden
+        resultContainer.style.display = 'block';
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error === 'no-speech') {
+            alert('No speech detected. Please try speaking again.');
+        } else if (event.error === 'audio-capture') {
+            alert('No microphone detected. Please ensure your microphone is connected and try again.');
+        } else if (event.error === 'not-allowed') {
+            alert('Microphone access denied. Please allow microphone access and try again.');
+        }
+        stopRecording();
+    };
+}
+
+// Microphone button click handler
+micBtn.addEventListener('click', () => {
+    if (!recognition) {
+        initSpeechRecognition();
+    }
+
+    if (isRecording) {
+        stopRecording();
+    } else {
+        startRecording();
+    }
+});
+
+function startRecording() {
+    try {
+        recognition.start();
+    } catch (error) {
+        console.error('Error starting recognition:', error);
+        alert('Error starting speech recognition. Please try again.');
+    }
+}
+
+function stopRecording() {
+    try {
+        recognition.stop();
+    } catch (error) {
+        console.error('Error stopping recognition:', error);
+    }
+}
 
 // Drag and Drop handlers
 dropZone.addEventListener('dragover', (e) => {
@@ -80,17 +183,12 @@ convertBtn.addEventListener('click', async () => {
 async function convertAudioToText(file) {
     return new Promise((resolve, reject) => {
         const audio = new Audio();
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const fileRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         
-        // Configure recognition
-        recognition.continuous = true;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        
-        // Detect language based on file name or content
-        const isHindi = file.name.toLowerCase().includes('hindi') || 
-                       file.name.toLowerCase().includes('हिंदी');
-        recognition.lang = isHindi ? 'hi-IN' : 'en-US';
+        fileRecognition.continuous = true;
+        fileRecognition.interimResults = false;
+        fileRecognition.maxAlternatives = 1;
+        fileRecognition.lang = currentLang;
 
         let finalTranscript = '';
         let isProcessing = false;
@@ -98,7 +196,7 @@ async function convertAudioToText(file) {
         const maxRetries = 3;
         let isRecognitionStarted = false;
 
-        recognition.onresult = (event) => {
+        fileRecognition.onresult = (event) => {
             isProcessing = true;
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 if (event.results[i].isFinal) {
@@ -107,16 +205,15 @@ async function convertAudioToText(file) {
             }
         };
 
-        recognition.onerror = (event) => {
+        fileRecognition.onerror = (event) => {
             if (event.error === 'no-speech' && retryCount < maxRetries) {
                 retryCount++;
                 console.log(`Retry attempt ${retryCount} of ${maxRetries}`);
-                // Adjust audio volume and try again
                 audio.volume = Math.min(1, audio.volume + 0.2);
                 audio.currentTime = 0;
                 audio.play();
                 if (!isRecognitionStarted) {
-                    recognition.start();
+                    fileRecognition.start();
                     isRecognitionStarted = true;
                 }
             } else {
@@ -124,7 +221,7 @@ async function convertAudioToText(file) {
             }
         };
 
-        recognition.onend = () => {
+        fileRecognition.onend = () => {
             isRecognitionStarted = false;
             if (!isProcessing && retryCount < maxRetries) {
                 retryCount++;
@@ -132,7 +229,7 @@ async function convertAudioToText(file) {
                 audio.currentTime = 0;
                 audio.play();
                 if (!isRecognitionStarted) {
-                    recognition.start();
+                    fileRecognition.start();
                     isRecognitionStarted = true;
                 }
             } else {
@@ -144,19 +241,15 @@ async function convertAudioToText(file) {
             }
         };
 
-        // Create object URL and start recognition
         const objectUrl = URL.createObjectURL(file);
         audio.src = objectUrl;
-        
-        // Configure audio settings
         audio.volume = 0.8;
         audio.playbackRate = 1.0;
         
         audio.onloadedmetadata = () => {
-            // Ensure audio is loaded and ready
             audio.oncanplay = () => {
                 if (!isRecognitionStarted) {
-                    recognition.start();
+                    fileRecognition.start();
                     isRecognitionStarted = true;
                 }
                 audio.play();
@@ -164,8 +257,8 @@ async function convertAudioToText(file) {
         };
 
         audio.onended = () => {
-            if (recognition && isRecognitionStarted) {
-                recognition.stop();
+            if (fileRecognition && isRecognitionStarted) {
+                fileRecognition.stop();
                 isRecognitionStarted = false;
             }
             URL.revokeObjectURL(objectUrl);
